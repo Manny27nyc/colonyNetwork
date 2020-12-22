@@ -299,22 +299,22 @@ contract("Voting Reputation", (accounts) => {
     });
 
     it("cannot initialise twice or more if not root", async () => {
-      await checkErrorRevert(voting.initialise(HALF, HALF, WAD, WAD, YEAR, YEAR, YEAR, YEAR), "voting-rep-already-initialised");
-      await checkErrorRevert(voting.initialise(HALF, HALF, WAD, WAD, YEAR, YEAR, YEAR, YEAR, { from: USER2 }), "voting-rep-caller-not-root");
+      await checkErrorRevert(voting.initialise(HALF, HALF, WAD, WAD, YEAR, YEAR, YEAR, YEAR), "voting-base-already-initialised");
+      await checkErrorRevert(voting.initialise(HALF, HALF, WAD, WAD, YEAR, YEAR, YEAR, YEAR, { from: USER2 }), "voting-base-caller-not-root");
     });
 
     it("cannot initialise with invalid values", async () => {
       voting = await VotingReputation.new();
       await voting.install(colony.address);
 
-      await checkErrorRevert(voting.initialise(HALF.addn(1), HALF, WAD, WAD, YEAR, YEAR, YEAR, YEAR), "voting-rep-greater-than-half-wad");
-      await checkErrorRevert(voting.initialise(HALF, HALF.addn(1), WAD, WAD, YEAR, YEAR, YEAR, YEAR), "voting-rep-greater-than-half-wad");
-      await checkErrorRevert(voting.initialise(HALF, HALF, WAD.addn(1), WAD, YEAR, YEAR, YEAR, YEAR), "voting-rep-greater-than-wad");
-      await checkErrorRevert(voting.initialise(HALF, HALF, WAD, WAD.addn(1), YEAR, YEAR, YEAR, YEAR), "voting-rep-greater-than-wad");
-      await checkErrorRevert(voting.initialise(HALF, HALF, WAD, WAD, YEAR + 1, YEAR, YEAR, YEAR), "voting-rep-period-too-long");
-      await checkErrorRevert(voting.initialise(HALF, HALF, WAD, WAD, YEAR, YEAR + 1, YEAR, YEAR), "voting-rep-period-too-long");
-      await checkErrorRevert(voting.initialise(HALF, HALF, WAD, WAD, YEAR, YEAR, YEAR + 1, YEAR), "voting-rep-period-too-long");
-      await checkErrorRevert(voting.initialise(HALF, HALF, WAD, WAD, YEAR, YEAR, YEAR, YEAR + 1), "voting-rep-period-too-long");
+      await checkErrorRevert(voting.initialise(HALF.addn(1), HALF, WAD, WAD, YEAR, YEAR, YEAR, YEAR), "voting-base-greater-than-half-wad");
+      await checkErrorRevert(voting.initialise(HALF, HALF.addn(1), WAD, WAD, YEAR, YEAR, YEAR, YEAR), "voting-base-greater-than-half-wad");
+      await checkErrorRevert(voting.initialise(HALF, HALF, WAD.addn(1), WAD, YEAR, YEAR, YEAR, YEAR), "voting-base-greater-than-wad");
+      await checkErrorRevert(voting.initialise(HALF, HALF, WAD, WAD.addn(1), YEAR, YEAR, YEAR, YEAR), "voting-base-greater-than-wad");
+      await checkErrorRevert(voting.initialise(HALF, HALF, WAD, WAD, YEAR + 1, YEAR, YEAR, YEAR), "voting-base-period-too-long");
+      await checkErrorRevert(voting.initialise(HALF, HALF, WAD, WAD, YEAR, YEAR + 1, YEAR, YEAR), "voting-base-period-too-long");
+      await checkErrorRevert(voting.initialise(HALF, HALF, WAD, WAD, YEAR, YEAR, YEAR + 1, YEAR), "voting-base-period-too-long");
+      await checkErrorRevert(voting.initialise(HALF, HALF, WAD, WAD, YEAR, YEAR, YEAR, YEAR + 1), "voting-base-period-too-long");
     });
 
     it("can initialised with valid values and emit expected event", async () => {
@@ -398,7 +398,7 @@ contract("Voting Reputation", (accounts) => {
       const action = await encodeTxData(colony, "makeTask", [1, 0, FAKE, 2, 0, 0]);
       await checkErrorRevert(
         voting.createRootMotion(colony.address, action, domain1Key, domain1Value, domain1Mask, domain1Siblings),
-        "voting-rep-alt-target-cannot-be-base-colony"
+        "voting-base-alt-target-cannot-be-base-colony"
       );
     });
 
@@ -411,12 +411,12 @@ contract("Voting Reputation", (accounts) => {
 
       await checkErrorRevert(
         voting.createDomainMotion(1, UINT256_MAX, action1, domain1Key, domain1Value, domain1Mask, domain1Siblings),
-        "voting-rep-invalid-function"
+        "voting-base-invalid-function"
       );
 
       await checkErrorRevert(
         voting.createDomainMotion(1, UINT256_MAX, action2, domain1Key, domain1Value, domain1Mask, domain1Siblings),
-        "voting-rep-invalid-function"
+        "voting-base-invalid-function"
       );
     });
 
@@ -427,7 +427,7 @@ contract("Voting Reputation", (accounts) => {
 
       // Provide proof for (3) instead of (2)
       const action = await encodeTxData(colony, "makeTask", [1, 0, FAKE, 2, 0, 0]);
-      await checkErrorRevert(voting.createDomainMotion(1, 1, action, key, value, mask, siblings), "voting-rep-invalid-domain-id");
+      await checkErrorRevert(voting.createDomainMotion(1, 1, action, key, value, mask, siblings), "voting-base-invalid-domain-id");
     });
   });
 
@@ -485,21 +485,21 @@ contract("Voting Reputation", (accounts) => {
     it("cannot stake on a non-existent motion", async () => {
       await checkErrorRevert(
         voting.stakeMotion(0, 1, UINT256_MAX, YAY, REQUIRED_STAKE, user0Key, user0Value, user0Mask, user0Siblings, { from: USER0 }),
-        "voting-rep-motion-not-staking"
+        "voting-base-motion-not-staking"
       );
     });
 
     it("cannot stake 0", async () => {
       await checkErrorRevert(
         voting.stakeMotion(motionId, 1, UINT256_MAX, YAY, 0, user0Key, user0Value, user0Mask, user0Siblings, { from: USER0 }),
-        "voting-rep-bad-amount"
+        "voting-base-bad-amount"
       );
     });
 
     it("cannot stake a nonexistent side", async () => {
       await checkErrorRevert(
         voting.stakeMotion(motionId, 1, UINT256_MAX, 2, REQUIRED_STAKE, user0Key, user0Value, user0Mask, user0Siblings, { from: USER0 }),
-        "voting-rep-bad-vote"
+        "voting-base-bad-vote"
       );
     });
 
@@ -508,7 +508,7 @@ contract("Voting Reputation", (accounts) => {
 
       await checkErrorRevert(
         voting.stakeMotion(motionId, 1, UINT256_MAX, YAY, minStake.subn(1), user0Key, user0Value, user0Mask, user0Siblings, { from: USER0 }),
-        "voting-rep-insufficient-stake"
+        "voting-base-insufficient-stake"
       );
 
       await voting.stakeMotion(motionId, 1, UINT256_MAX, YAY, minStake, user0Key, user0Value, user0Mask, user0Siblings, { from: USER0 });
@@ -720,7 +720,7 @@ contract("Voting Reputation", (accounts) => {
 
       await checkErrorRevert(
         voting.stakeMotion(motionId, 1, UINT256_MAX, YAY, REQUIRED_STAKE, user0Key, user0Value, user0Mask, user0Siblings, { from: USER0 }),
-        "voting-rep-expenditure-lock-failed"
+        "voting-base-expenditure-lock-failed"
       );
     });
 
@@ -795,7 +795,7 @@ contract("Voting Reputation", (accounts) => {
     it("cannot stake with someone else's reputation", async () => {
       await checkErrorRevert(
         voting.stakeMotion(motionId, 1, UINT256_MAX, YAY, REQUIRED_STAKE, user0Key, user0Value, user0Mask, user0Siblings, { from: USER1 }),
-        "voting-rep-invalid-user-address"
+        "voting-base-invalid-user-address"
       );
     });
 
@@ -806,7 +806,7 @@ contract("Voting Reputation", (accounts) => {
 
       await checkErrorRevert(
         voting.stakeMotion(motionId, 1, UINT256_MAX, YAY, REQUIRED_STAKE, user2Key, user2Value, user2Mask, user2Siblings, { from: USER2 }),
-        "voting-rep-insufficient-rep"
+        "voting-base-insufficient-rep"
       );
     });
 
@@ -815,12 +815,12 @@ contract("Voting Reputation", (accounts) => {
 
       await checkErrorRevert(
         voting.stakeMotion(motionId, 1, UINT256_MAX, YAY, REQUIRED_STAKE, user0Key, user0Value, user0Mask, user0Siblings, { from: USER0 }),
-        "voting-rep-motion-not-staking"
+        "voting-base-motion-not-staking"
       );
 
       await checkErrorRevert(
         voting.stakeMotion(motionId, 1, UINT256_MAX, NAY, REQUIRED_STAKE, user1Key, user1Value, user1Mask, user1Siblings, { from: USER1 }),
-        "voting-rep-motion-not-staking"
+        "voting-base-motion-not-staking"
       );
     });
   });
@@ -867,7 +867,7 @@ contract("Voting Reputation", (accounts) => {
       // Revealing first vote fails
       await checkErrorRevert(
         voting.revealVote(motionId, SALT, NAY, user0Key, user0Value, user0Mask, user0Siblings, { from: USER0 }),
-        "voting-rep-secret-no-match"
+        "voting-base-secret-no-match"
       );
 
       // Revealing second succeeds
@@ -876,17 +876,17 @@ contract("Voting Reputation", (accounts) => {
 
     it("can update votes, but the total reputation does not change", async () => {
       let motion = await voting.getMotion(motionId);
-      expect(motion.repSubmitted).to.be.zero;
+      expect(motion.totalVotes).to.be.zero;
 
       await voting.submitVote(motionId, soliditySha3(SALT, NAY), user0Key, user0Value, user0Mask, user0Siblings, { from: USER0 });
 
       motion = await voting.getMotion(motionId);
-      expect(motion.repSubmitted).to.eq.BN(WAD);
+      expect(motion.totalVotes).to.eq.BN(WAD);
 
       await voting.submitVote(motionId, soliditySha3(SALT, YAY), user0Key, user0Value, user0Mask, user0Siblings, { from: USER0 });
 
       motion = await voting.getMotion(motionId);
-      expect(motion.repSubmitted).to.eq.BN(WAD);
+      expect(motion.totalVotes).to.eq.BN(WAD);
     });
 
     it("cannot reveal an invalid vote", async () => {
@@ -896,7 +896,7 @@ contract("Voting Reputation", (accounts) => {
 
       await checkErrorRevert(
         voting.revealVote(motionId, SALT, 2, user0Key, user0Value, user0Mask, user0Siblings, { from: USER0 }),
-        "voting-rep-bad-vote"
+        "voting-base-bad-vote"
       );
     });
 
@@ -908,7 +908,7 @@ contract("Voting Reputation", (accounts) => {
 
       await checkErrorRevert(
         voting.revealVote(motionId, SALT, YAY, user0Key, user0Value, user0Mask, user0Siblings, { from: USER0 }),
-        "voting-rep-secret-no-match"
+        "voting-base-secret-no-match"
       );
     });
 
@@ -953,14 +953,14 @@ contract("Voting Reputation", (accounts) => {
     it("cannot submit a vote on a non-existent motion", async () => {
       await checkErrorRevert(
         voting.submitVote(0, "0x0", user0Key, user0Value, user0Mask, user0Siblings, { from: USER0 }),
-        "voting-rep-motion-not-open"
+        "voting-base-motion-not-open"
       );
     });
 
     it("cannot submit a null vote", async () => {
       await checkErrorRevert(
         voting.submitVote(motionId, "0x0", user0Key, user0Value, user0Mask, user0Siblings, { from: USER0 }),
-        "voting-rep-invalid-secret"
+        "voting-base-invalid-secret"
       );
     });
 
@@ -969,7 +969,7 @@ contract("Voting Reputation", (accounts) => {
 
       await checkErrorRevert(
         voting.submitVote(motionId, soliditySha3(SALT, NAY), user0Key, user0Value, user0Mask, user0Siblings, { from: USER0 }),
-        "voting-rep-motion-not-open"
+        "voting-base-motion-not-open"
       );
     });
 
@@ -978,13 +978,13 @@ contract("Voting Reputation", (accounts) => {
 
       await checkErrorRevert(
         voting.revealVote(0, SALT, YAY, user0Key, user0Value, user0Mask, user0Siblings, { from: USER0 }),
-        "voting-rep-motion-not-reveal"
+        "voting-base-motion-not-reveal"
       );
     });
 
     it("cannot reveal a vote during the submit period", async () => {
       await voting.submitVote(motionId, soliditySha3(SALT, NAY), user0Key, user0Value, user0Mask, user0Siblings, { from: USER0 });
-      await checkErrorRevert(voting.revealVote(motionId, SALT, YAY, FAKE, FAKE, 0, [], { from: USER0 }), "voting-rep-motion-not-reveal");
+      await checkErrorRevert(voting.revealVote(motionId, SALT, YAY, FAKE, FAKE, 0, [], { from: USER0 }), "voting-base-motion-not-reveal");
     });
 
     it("cannot reveal a vote after the reveal period ends", async () => {
@@ -993,7 +993,7 @@ contract("Voting Reputation", (accounts) => {
       await forwardTime(SUBMIT_PERIOD, this);
       await forwardTime(REVEAL_PERIOD, this);
 
-      await checkErrorRevert(voting.revealVote(motionId, SALT, NAY, FAKE, FAKE, 0, [], { from: USER0 }), "voting-rep-motion-not-reveal");
+      await checkErrorRevert(voting.revealVote(motionId, SALT, NAY, FAKE, FAKE, 0, [], { from: USER0 }), "voting-base-motion-not-reveal");
     });
 
     it("cannot reveal a vote with a bad secret", async () => {
@@ -1003,7 +1003,7 @@ contract("Voting Reputation", (accounts) => {
 
       await checkErrorRevert(
         voting.revealVote(motionId, SALT, YAY, user0Key, user0Value, user0Mask, user0Siblings, { from: USER0 }),
-        "voting-rep-secret-no-match"
+        "voting-base-secret-no-match"
       );
     });
 
@@ -1013,7 +1013,7 @@ contract("Voting Reputation", (accounts) => {
       await forwardTime(SUBMIT_PERIOD, this);
 
       // Invalid proof (wrong root hash)
-      await checkErrorRevert(voting.revealVote(motionId, SALT, NAY, FAKE, FAKE, 0, [], { from: USER0 }), "voting-rep-invalid-root-hash");
+      await checkErrorRevert(voting.revealVote(motionId, SALT, NAY, FAKE, FAKE, 0, [], { from: USER0 }), "voting-base-invalid-root-hash");
 
       // Invalid colony address
       let key, value, mask, siblings; // eslint-disable-line one-var
@@ -1023,19 +1023,19 @@ contract("Voting Reputation", (accounts) => {
 
       await checkErrorRevert(
         voting.revealVote(motionId, SALT, NAY, key, value, mask, siblings, { from: USER0 }),
-        "voting-rep-invalid-colony-address"
+        "voting-base-invalid-colony-address"
       );
 
       // Invalid skill id
       key = makeReputationKey(colony.address, 1234, USER0);
       value = makeReputationValue(WAD, 4);
       [mask, siblings] = await reputationTree.getProof(key);
-      await checkErrorRevert(voting.revealVote(motionId, SALT, NAY, key, value, mask, siblings, { from: USER0 }), "voting-rep-invalid-skill-id");
+      await checkErrorRevert(voting.revealVote(motionId, SALT, NAY, key, value, mask, siblings, { from: USER0 }), "voting-base-invalid-skill-id");
 
       // Invalid user address
       await checkErrorRevert(
         voting.revealVote(motionId, SALT, NAY, user1Key, user1Value, user1Mask, user1Siblings, { from: USER0 }),
-        "voting-rep-invalid-user-address"
+        "voting-base-invalid-user-address"
       );
     });
   });
@@ -1050,7 +1050,7 @@ contract("Voting Reputation", (accounts) => {
     });
 
     it("cannot execute a non-existent motion", async () => {
-      await checkErrorRevert(voting.finalizeMotion(0), "voting-rep-motion-not-finalizable");
+      await checkErrorRevert(voting.finalizeMotion(0), "voting-base-motion-not-finalizable");
     });
 
     it("motion has no effect if extension does not have permissions", async () => {
@@ -1075,7 +1075,7 @@ contract("Voting Reputation", (accounts) => {
 
       await forwardTime(STAKE_PERIOD, this);
 
-      await checkErrorRevert(voting.finalizeMotion(motionId), "voting-rep-motion-not-finalizable");
+      await checkErrorRevert(voting.finalizeMotion(motionId), "voting-base-motion-not-finalizable");
     });
 
     it("can take an action if there is insufficient opposition", async () => {
@@ -1144,13 +1144,13 @@ contract("Voting Reputation", (accounts) => {
 
       motionState = await voting.getMotionState(motionId);
       expect(motionState).to.eq.BN(STAKING);
-      await checkErrorRevert(voting.finalizeMotion(motionId), "voting-rep-motion-not-finalizable");
+      await checkErrorRevert(voting.finalizeMotion(motionId), "voting-base-motion-not-finalizable");
 
       await voting.stakeMotion(motionId, 1, UINT256_MAX, NAY, REQUIRED_STAKE, user1Key, user1Value, user1Mask, user1Siblings, { from: USER1 });
 
       motionState = await voting.getMotionState(motionId);
       expect(motionState).to.eq.BN(SUBMIT);
-      await checkErrorRevert(voting.finalizeMotion(motionId), "voting-rep-motion-not-finalizable");
+      await checkErrorRevert(voting.finalizeMotion(motionId), "voting-base-motion-not-finalizable");
     });
 
     it("cannot take an action twice", async () => {
@@ -1161,7 +1161,7 @@ contract("Voting Reputation", (accounts) => {
       const { logs } = await voting.finalizeMotion(motionId);
       expect(logs[0].args.executed).to.be.true;
 
-      await checkErrorRevert(voting.finalizeMotion(motionId), "voting-rep-motion-not-finalizable");
+      await checkErrorRevert(voting.finalizeMotion(motionId), "voting-base-motion-not-finalizable");
     });
 
     it("can take an action if the motion passes", async () => {
@@ -1330,7 +1330,7 @@ contract("Voting Reputation", (accounts) => {
     });
 
     it("cannot claim rewards from a non-existent motion", async () => {
-      await checkErrorRevert(voting.claimReward(0, 1, UINT256_MAX, USER0, YAY), "voting-rep-motion-not-claimable");
+      await checkErrorRevert(voting.claimReward(0, 1, UINT256_MAX, USER0, YAY), "voting-base-motion-not-claimable");
     });
 
     it("returns 0 for staker rewards if no-one staked on a side of a motion", async () => {
@@ -1558,11 +1558,11 @@ contract("Voting Reputation", (accounts) => {
 
       await voting.claimReward(motionId, 1, UINT256_MAX, USER0, YAY);
 
-      await checkErrorRevert(voting.claimReward(motionId, 1, UINT256_MAX, USER0, YAY), "voting-rep-nothing-to-claim");
+      await checkErrorRevert(voting.claimReward(motionId, 1, UINT256_MAX, USER0, YAY), "voting-base-nothing-to-claim");
     });
 
     it("cannot claim rewards before a motion is finalized", async () => {
-      await checkErrorRevert(voting.claimReward(motionId, 1, UINT256_MAX, USER0, YAY), "voting-rep-motion-not-claimable");
+      await checkErrorRevert(voting.claimReward(motionId, 1, UINT256_MAX, USER0, YAY), "voting-base-motion-not-claimable");
     });
   });
 
@@ -1604,10 +1604,6 @@ contract("Voting Reputation", (accounts) => {
       await voting.escalateMotion(motionId, 1, 0, domain1Key, domain1Value, domain1Mask, domain1Siblings, { from: USER0 });
     });
 
-    it("can internally escalate a domain motion after a vote", async () => {
-      await voting.escalateMotion(motionId, 1, 0, domain1Key, domain1Value, domain1Mask, domain1Siblings, { from: USER1 });
-    });
-
     it("cannot internally escalate a domain motion if not in a 'closed' state", async () => {
       await forwardTime(ESCALATION_PERIOD, this);
 
@@ -1615,19 +1611,19 @@ contract("Voting Reputation", (accounts) => {
 
       await checkErrorRevert(
         voting.escalateMotion(motionId, 1, 0, domain1Key, domain1Value, domain1Mask, domain1Siblings, { from: USER2 }),
-        "voting-rep-motion-not-closed"
+        "voting-base-motion-not-closed"
       );
     });
 
     it("cannot internally escalate a domain motion with an invalid domain proof", async () => {
       await checkErrorRevert(
         voting.escalateMotion(motionId, 1, 1, domain1Key, domain1Value, domain1Mask, domain1Siblings, { from: USER0 }),
-        "voting-rep-invalid-domain-proof"
+        "voting-base-invalid-domain-proof"
       );
     });
 
     it("cannot internally escalate a domain motion with an invalid reputation proof", async () => {
-      await checkErrorRevert(voting.escalateMotion(motionId, 1, 0, "0x0", "0x0", "0x0", [], { from: USER0 }), "voting-rep-invalid-root-hash");
+      await checkErrorRevert(voting.escalateMotion(motionId, 1, 0, "0x0", "0x0", "0x0", [], { from: USER0 }), "voting-base-invalid-root-hash");
     });
 
     it("can stake after internally escalating a domain motion", async () => {
@@ -1690,7 +1686,7 @@ contract("Voting Reputation", (accounts) => {
       // Now check that the rewards come out properly
       const user1LockPre = await tokenLocking.getUserLock(token.address, USER1);
 
-      await checkErrorRevert(voting.claimReward(motionId, 1, UINT256_MAX, USER0, YAY), "voting-rep-nothing-to-claim");
+      await checkErrorRevert(voting.claimReward(motionId, 1, UINT256_MAX, USER0, YAY), "voting-base-nothing-to-claim");
       await voting.claimReward(motionId, 1, UINT256_MAX, USER1, NAY);
 
       const user1LockPost = await tokenLocking.getUserLock(token.address, USER1);
