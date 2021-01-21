@@ -1380,7 +1380,8 @@ contract("Voting Reputation", (accounts) => {
       const user0LockPost = await tokenLocking.getUserLock(token.address, USER0);
       const user1LockPost = await tokenLocking.getUserLock(token.address, USER1);
 
-      const loserStake = REQUIRED_STAKE.divn(10).muln(8); // Take out voter comp
+      const motion = await voting.getMotion(motionId);
+      const loserStake = REQUIRED_STAKE.sub(new BN(motion.paidVoterComp));
       const expectedReward0 = loserStake.divn(3).muln(2); // (stake * .8) * (winPct = 1/3 * 2)
       const expectedReward1 = REQUIRED_STAKE.add(loserStake.divn(3)); // stake + ((stake * .8) * (1 - (winPct = 2/3 * 2))
 
@@ -1429,7 +1430,8 @@ contract("Voting Reputation", (accounts) => {
       const user1LockPost = await tokenLocking.getUserLock(token.address, USER1);
       const user2LockPost = await tokenLocking.getUserLock(token.address, USER2);
 
-      const loserStake = REQUIRED_STAKE.divn(10).muln(8); // Take out voter comp
+      const motion = await voting.getMotion(motionId);
+      const loserStake = REQUIRED_STAKE.sub(new BN(motion.paidVoterComp));
       const expectedReward0 = loserStake.divn(3).muln(2); // (stake * .8) * (winPct = 1/3 * 2)
       const expectedReward1 = REQUIRED_STAKE.add(loserStake.divn(3)).divn(3).muln(2); // stake + ((stake * .8) * (1 - (winPct = 2/3 * 2))
       const expectedReward2 = REQUIRED_STAKE.add(loserStake.divn(3)).divn(3); // stake + ((stake * .8) * (1 - (winPct = 2/3 * 2))
@@ -1472,7 +1474,8 @@ contract("Voting Reputation", (accounts) => {
       const user1LockPost = await tokenLocking.getUserLock(token.address, USER1);
       const user2LockPost = await tokenLocking.getUserLock(token.address, USER2);
 
-      const loserStake = REQUIRED_STAKE.divn(10).muln(8); // Take out voter comp
+      const motion = await voting.getMotion(motionId);
+      const loserStake = REQUIRED_STAKE.sub(new BN(motion.paidVoterComp));
       const expectedReward0 = loserStake.divn(3).muln(2).divn(3).muln(2); // (stake * .8) * (winPct = 1/3 * 2)
       const expectedReward1 = REQUIRED_STAKE.add(loserStake.divn(3)); // stake + ((stake * .8) * (1 - (winPct = 2/3 * 2))
       const expectedReward2 = loserStake.divn(3).muln(2).divn(3); // (stake * .8) * (winPct = 1/3 * 2)
