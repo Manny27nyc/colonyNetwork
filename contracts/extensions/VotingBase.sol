@@ -238,6 +238,8 @@ abstract contract VotingBase is ColonyExtension {
       emit MotionEventSet(_motionId, REVEAL_END);
     }
 
+    postReveal(_motionId, msg.sender);
+
     tokenLocking.transfer(token, voterReward, msg.sender, true);
   }
 
