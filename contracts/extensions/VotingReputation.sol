@@ -19,10 +19,11 @@ pragma solidity 0.7.3;
 pragma experimental ABIEncoderV2;
 
 import "./VotingBase.sol";
-import "./../patriciaTree/PatriciaTreeProofs.sol";
 
 
-contract VotingReputation is VotingBase, PatriciaTreeProofs {
+contract VotingReputation is VotingBase {
+
+  uint256 constant NUM_INFLUENCES = 1;
 
   /// @notice Returns the identifier of the extension
   function identifier() public override pure returns (bytes32) {
@@ -35,24 +36,61 @@ contract VotingReputation is VotingBase, PatriciaTreeProofs {
     return 1;
   }
 
-  // [rootHash][skillId][user] => reputationBalance
-  mapping (bytes32 => mapping (uint256 => mapping (address => uint256))) influences;
-  // [rootHash][skillId] => reputationBalance
-  mapping (bytes32 => mapping (uint256 => uint256)) totalInfluences;
+  // [motionId][skillId][user] => reputationBalance
+  mapping (uint256 => mapping (uint256 => mapping (address => uint256[]))) influences;
+  // [motionId][skillId] => reputationBalance
+  mapping (uint256 => mapping (uint256 => uint256[])) totalInfluences;
 
   // Public
 
+  /// @notice Set influence for a motion
   /// @param _motionId The id of the motion
-  /// @param _user The user in question
-  function getInfluence(uint256 _motionId, address _user) public view override returns (uint256) {
-    Motion storage motion = motions[_motionId];
-    return influences[motion.rootHash][motion.skillId][_user];
+  /// @param _key Reputation tree key for the root domain
+  /// @param _value Reputation tree value for the root domain
+  /// @param _branchMask The branchmask of the proof
+  /// @param _siblings The siblings of the proof
+  function setInfluence(
+    uint256 _motionId,
+    bytes memory _key,
+    bytes memory _value,
+    uint256 _branchMask,
+    bytes32[] memory _siblings
+  )
+    public
+  {
+    uint256 skillId = motions[_motionId].skillId;
+    require(totalInfluences[_motionId][skillId].length > 0, "voting-reputation-invalid-motion");
+
+    if (influences[_motionId][skillId][msg.sender].length == 0) {
+      influences[_motionId][skillId][msg.sender] = new uint256[](NUM_INFLUENCES);
+      uint256 userRep = getReputationFromProof(_motionId, msg.sender, _key, _value, _branchMask, _siblings);
+
+      influences[_motionId][skillId][msg.sender][0] = userRep;
+      totalInfluences[_motionId][skillId][0] = add(totalInfluences[_motionId][skillId][0], userRep);
+    }
   }
 
+  /// @notice Get the user influence in the motion
   /// @param _motionId The id of the motion
-  function getTotalInfluence(uint256 _motionId) public view override returns (uint256) {
-    Motion storage motion = motions[_motionId];
-    return totalInfluences[motion.rootHash][motion.skillId];
+  /// @param _user The user in question
+  function getInfluence(uint256 _motionId, address _user)
+    public
+    view
+    override
+    returns (uint256[] memory influence)
+  {
+    influence = influences[_motionId][motions[_motionId].skillId][_user];
+  }
+
+  /// @notice Get the total influence in the motion
+  /// @param _motionId The id of the motion
+  function getTotalInfluence(uint256 _motionId)
+    public
+    view
+    override
+    returns (uint256[] memory influence)
+  {
+    influence = totalInfluences[_motionId][motions[_motionId].skillId];
   }
 
   function postReveal(uint256 _motionId, address _user) internal override {}
@@ -75,8 +113,11 @@ contract VotingReputation is VotingBase, PatriciaTreeProofs {
   )
     public
   {
-    createMotion(_altTarget, _action, 1);
-    motions[motionCount].maxVotes = getReputationFromProof(motionCount, address(0x0), _key, _value, _branchMask, _siblings);
+    createMotion(_altTarget, _action, 1, NUM_INFLUENCES);
+    Motion storage motion = motions[motionCount];
+
+    totalInfluences[motionCount][motion.skillId] = new uint256[](NUM_INFLUENCES);
+    motion.maxVotes[0] = getReputationFromProof(motionCount, address(0x0), _key, _value, _branchMask, _siblings);
   }
 
   /// @notice Create a motion in any domain
@@ -112,8 +153,11 @@ contract VotingReputation is VotingBase, PatriciaTreeProofs {
       require(childSkillId == actionDomainSkillId, "voting-base-invalid-domain-id");
     }
 
-    createMotion(address(0x0), _action, _domainId);
-    motions[motionCount].maxVotes = getReputationFromProof(motionCount, address(0x0), _key, _value, _branchMask, _siblings);
+    createMotion(address(0x0), _action, _domainId, NUM_INFLUENCES);
+    Motion storage motion = motions[motionCount];
+
+    totalInfluences[motionCount][motion.skillId] = new uint256[](NUM_INFLUENCES);
+    motion.maxVotes[0] = getReputationFromProof(motionCount, address(0x0), _key, _value, _branchMask, _siblings);
   }
 
   /// @notice Stake on a motion
@@ -184,6 +228,7 @@ contract VotingReputation is VotingBase, PatriciaTreeProofs {
     public
   {
     Motion storage motion = motions[_motionId];
+
     require(getMotionState(_motionId) == MotionState.Closed, "voting-base-motion-not-closed");
 
     uint256 newDomainSkillId = colony.getDomain(_newDomainId).skillId;
@@ -193,9 +238,11 @@ contract VotingReputation is VotingBase, PatriciaTreeProofs {
     uint256 domainId = motion.domainId;
     motion.domainId = _newDomainId;
     motion.skillId = newDomainSkillId;
-    motion.maxVotes = getReputationFromProof(_motionId, address(0x0), _key, _value, _branchMask, _siblings);
 
-    uint256 loser = (motion.votes[NAY] < motion.votes[YAY]) ? NAY : YAY;
+    totalInfluences[_motionId][motion.skillId] = new uint256[](NUM_INFLUENCES);
+    motion.maxVotes[0] = getReputationFromProof(_motionId, address(0x0), _key, _value, _branchMask, _siblings);
+
+    uint256 loser = (motion.votes[0][NAY] < motion.votes[0][YAY]) ? NAY : YAY;
     motion.stakes[loser] = sub(motion.stakes[loser], motion.paidVoterComp);
     motion.pastVoterComp[loser] = add(motion.pastVoterComp[loser], motion.paidVoterComp);
     delete motion.paidVoterComp;
@@ -214,55 +261,6 @@ contract VotingReputation is VotingBase, PatriciaTreeProofs {
     if (motion.events[STAKE_END] == uint64(block.timestamp)) {
       emit MotionEventSet(_motionId, STAKE_END);
     }
-  }
-
-  // Internal
-
-  function setInfluence(
-    uint256 _motionId,
-    bytes memory _key,
-    bytes memory _value,
-    uint256 _branchMask,
-    bytes32[] memory _siblings
-  ) internal {
-    Motion storage motion = motions[_motionId];
-    if (influences[motion.rootHash][motion.skillId][msg.sender] == 0) {
-      uint256 userRep = getReputationFromProof(_motionId, msg.sender, _key, _value, _branchMask, _siblings);
-      totalInfluences[motion.rootHash][motion.skillId] = add(totalInfluences[motion.rootHash][motion.skillId], userRep);
-      influences[motion.rootHash][motion.skillId][msg.sender] = userRep;
-    }
-  }
-
-  function getReputationFromProof(
-    uint256 _motionId,
-    address _who,
-    bytes memory _key,
-    bytes memory _value,
-    uint256 _branchMask,
-    bytes32[] memory _siblings
-  )
-    internal view returns (uint256)
-  {
-    bytes32 impliedRoot = getImpliedRootHashKey(_key, _value, _branchMask, _siblings);
-    require(motions[_motionId].rootHash == impliedRoot, "voting-base-invalid-root-hash");
-
-    uint256 reputationValue;
-    address keyColonyAddress;
-    uint256 keySkill;
-    address keyUserAddress;
-
-    assembly {
-      reputationValue := mload(add(_value, 32))
-      keyColonyAddress := mload(add(_key, 20))
-      keySkill := mload(add(_key, 52))
-      keyUserAddress := mload(add(_key, 72))
-    }
-
-    require(keyColonyAddress == address(colony), "voting-base-invalid-colony-address");
-    require(keySkill == motions[_motionId].skillId, "voting-base-invalid-skill-id");
-    require(keyUserAddress == _who, "voting-base-invalid-user-address");
-
-    return reputationValue;
   }
 
 }

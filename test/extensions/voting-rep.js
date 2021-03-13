@@ -429,6 +429,13 @@ contract("Voting Reputation", (accounts) => {
       const action = await encodeTxData(colony, "makeTask", [1, 0, FAKE, 2, 0, 0]);
       await checkErrorRevert(voting.createDomainMotion(1, 1, action, key, value, mask, siblings), "voting-base-invalid-domain-id");
     });
+
+    it("cannot set influence on a non-existent motion", async () => {
+      await checkErrorRevert(
+        voting.setInfluence(0, user0Key, user0Value, user0Mask, user0Siblings, { from: USER0 }),
+        "voting-reputation-invalid-motion"
+      );
+    });
   });
 
   describe("staking on motions", async () => {
@@ -480,13 +487,6 @@ contract("Voting Reputation", (accounts) => {
 
       const lock = await tokenLocking.getUserLock(token.address, voting.address);
       expect(lock.balance).to.eq.BN(REQUIRED_STAKE.muln(2));
-    });
-
-    it("cannot stake on a non-existent motion", async () => {
-      await checkErrorRevert(
-        voting.stakeMotion(0, 1, UINT256_MAX, YAY, REQUIRED_STAKE, user0Key, user0Value, user0Mask, user0Siblings, { from: USER0 }),
-        "voting-base-invalid-root-hash"
-      );
     });
 
     it("cannot stake 0", async () => {
@@ -854,8 +854,8 @@ contract("Voting Reputation", (accounts) => {
 
       // See final counts
       const { votes } = await voting.getMotion(motionId);
-      expect(votes[0]).to.be.zero;
-      expect(votes[1]).to.eq.BN(WAD.muln(3));
+      expect(votes[0][0]).to.be.zero;
+      expect(votes[0][1]).to.eq.BN(WAD.muln(3));
     });
 
     it("can update votes, but just the last one counts", async () => {
@@ -873,17 +873,17 @@ contract("Voting Reputation", (accounts) => {
 
     it("can update votes, but the total reputation does not change", async () => {
       let motion = await voting.getMotion(motionId);
-      expect(motion.totalVotes).to.be.zero;
+      expect(motion.totalVotes[0]).to.be.zero;
 
       await voting.submitVote(motionId, soliditySha3(SALT, NAY), user0Key, user0Value, user0Mask, user0Siblings, { from: USER0 });
 
       motion = await voting.getMotion(motionId);
-      expect(motion.totalVotes).to.eq.BN(WAD);
+      expect(motion.totalVotes[0]).to.eq.BN(WAD);
 
       await voting.submitVote(motionId, soliditySha3(SALT, YAY), user0Key, user0Value, user0Mask, user0Siblings, { from: USER0 });
 
       motion = await voting.getMotion(motionId);
-      expect(motion.totalVotes).to.eq.BN(WAD);
+      expect(motion.totalVotes[0]).to.eq.BN(WAD);
     });
 
     it("cannot reveal an invalid vote", async () => {
@@ -939,13 +939,6 @@ contract("Voting Reputation", (accounts) => {
 
       await voting.revealVote(motionId, SALT, NAY, { from: USER0 });
       await voting.revealVote(motionId2, SALT, NAY, { from: USER0 });
-    });
-
-    it("cannot submit a vote on a non-existent motion", async () => {
-      await checkErrorRevert(
-        voting.submitVote(0, "0x0", user0Key, user0Value, user0Mask, user0Siblings, { from: USER0 }),
-        "voting-base-invalid-root-hash"
-      );
     });
 
     it("cannot submit a null vote", async () => {
