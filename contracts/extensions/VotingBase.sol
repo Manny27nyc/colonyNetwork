@@ -558,6 +558,7 @@ abstract contract VotingBase is ColonyExtension, PatriciaTreeProofs {
       }
 
       winFraction = winFraction / motion.votes.length;
+
       uint256 winShare = wmul(winFraction, 2 * WAD); // On a scale of 0-2 WAD
       uint256 loserStake = sub(requiredStake, motion.paidVoterComp);
 
