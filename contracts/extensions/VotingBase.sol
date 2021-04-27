@@ -790,24 +790,6 @@ abstract contract VotingBase is ColonyExtension, PatriciaTreeProofs {
     return sub(1, _vote);
   }
 
-  function getActionDomainSkillId(bytes memory _action) internal view returns (uint256) {
-    uint256 permissionDomainId;
-    uint256 childSkillIndex;
-
-    assembly {
-      permissionDomainId := mload(add(_action, 0x24))
-      childSkillIndex := mload(add(_action, 0x44))
-    }
-
-    uint256 permissionSkillId = colony.getDomain(permissionDomainId).skillId;
-
-    if (childSkillIndex == UINT256_MAX) {
-      return permissionSkillId;
-    } else {
-      return colonyNetwork.getChildSkillId(permissionSkillId, childSkillIndex);
-    }
-  }
-
   function executeCall(uint256 motionId, bytes memory action) internal returns (bool success) {
     address altTarget = motions[motionId].altTarget;
     address to = (altTarget == address(0x0)) ? address(colony) : altTarget;

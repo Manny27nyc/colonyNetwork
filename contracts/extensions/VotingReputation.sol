@@ -263,4 +263,26 @@ contract VotingReputation is VotingBase {
     }
   }
 
+  // Internal
+
+  function getActionDomainSkillId(bytes memory _action) internal view returns (uint256) {
+    uint256 permissionDomainId;
+    uint256 childSkillIndex;
+
+    // By convention, these are the first two arguments to the function
+
+    assembly {
+      permissionDomainId := mload(add(_action, 0x24))
+      childSkillIndex := mload(add(_action, 0x44))
+    }
+
+    uint256 permissionSkillId = colony.getDomain(permissionDomainId).skillId;
+
+    if (childSkillIndex == UINT256_MAX) {
+      return permissionSkillId;
+    } else {
+      return colonyNetwork.getChildSkillId(permissionSkillId, childSkillIndex);
+    }
+  }
+
 }
