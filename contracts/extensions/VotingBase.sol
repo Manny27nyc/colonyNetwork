@@ -295,8 +295,10 @@ abstract contract VotingBase is ColonyExtension, PatriciaTreeProofs {
 
       if (expenditurePastVotes[actionHash] < votePower) {
         expenditurePastVotes[actionHash] = votePower;
+        // slither-disable-next-line boolean-cst
         canExecute = canExecute && true;
       } else {
+        // slither-disable-next-line boolean-cst
         canExecute = canExecute && false;
       }
     }
@@ -682,10 +684,6 @@ abstract contract VotingBase is ColonyExtension, PatriciaTreeProofs {
       "voting-base-insufficient-stake"
     );
 
-    tokenLocking.deposit(token, 0, true); // Faux deposit to clear any locks
-    colony.obligateStake(msg.sender, motion.domainId, amount);
-    colony.transferStake(_permissionDomainId, _childSkillIndex, address(this), msg.sender, motion.domainId, amount, address(this));
-
     // Update the stake
     motion.stakes[_vote] = add(motion.stakes[_vote], amount);
     stakes[_motionId][msg.sender][_vote] = stakerTotalAmount;
@@ -732,6 +730,10 @@ abstract contract VotingBase is ColonyExtension, PatriciaTreeProofs {
 
       emit MotionEventSet(_motionId, STAKE_END);
     }
+
+    tokenLocking.deposit(token, 0, true); // Faux deposit to clear any locks
+    colony.obligateStake(msg.sender, motion.domainId, amount);
+    colony.transferStake(_permissionDomainId, _childSkillIndex, address(this), msg.sender, motion.domainId, amount, address(this));
 
   }
 
