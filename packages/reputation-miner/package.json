@@ -15,7 +15,7 @@
   "license": "ISC",
   "dependencies": {
     "bn.js": "^5.0.0",
-    "discord.js": "^12.2.0",
+    "discord.js": "^13.14.0",
     "ethers": "^5.0.19",
     "express": "^4.16.3",
     "ganache-core": "^2.8.0",
@@ -24,7 +24,7 @@
     "request-promise": "^4.2.4",
     "slack": "^11.0.2",
     "sqlite": "^4.0.0",
-    "sqlite3": "^5.0.0",
+    "sqlite3": "^5.0.3",
     "web3-utils": "^1.0.0",
     "yargs": "^16.0.0"
   },
