@@ -14,14 +14,14 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.21.1",
+    "axios": "^1.7.2",
     "body-parser": "^1.19.0",
     "etherpass": "^1.0.2",
-    "ethers": "^5.0.19",
+    "ethers": "^5.7.2",
     "express": "^4.16.3",
     "jsonfile": "^6.0.1",
     "sqlite": "^4.0.19",
-    "sqlite3": "^5.0.2",
+    "sqlite3": "^5.1.5",
     "yargs": "^16.0.0"
   },
   "devDependencies": {
